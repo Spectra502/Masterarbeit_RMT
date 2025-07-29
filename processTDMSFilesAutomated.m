@@ -55,10 +55,13 @@ function tdmsTables = processTDMSFilesAutomated( ...
                 sampledData{:,2} = zscore_normalization(sampledData{:,2});
                 case 'highpass'
                     sampledData{:,2} = min_max_normalization(sampledData{:,2});
-                    sampledData{:,2} = highpassGearMesh(sampledData{:,2}, 100000, speed, 22, 4);
+                    sampledData{:,2} = highpassGearMesh(sampledData{:,2}, 100000/decimateFactor, speed, 22, 4);
                 case 'lowpass'
                     sampledData{:,2} = min_max_normalization(sampledData{:,2});
-                    sampledData{:,2} = lowpassGearMesh(sampledData{:,2}, 100000, speed, 22, 4);
+                    sampledData{:,2} = lowpassGearMesh(sampledData{:,2}, 100000/decimateFactor, speed, 22, 4);
+                case 'bandpass'
+                    sampledData{:,2} = min_max_normalization(sampledData{:,2});
+                    sampledData{:,2} = bandpassGearMesh(sampledData{:,2}, 100000/decimateFactor, speed, 22, 50);
             end
             if ~isempty(imageFolder)
                 plotFFTAndSave( sampledData{:,2}, fs, speed, 22, ...
