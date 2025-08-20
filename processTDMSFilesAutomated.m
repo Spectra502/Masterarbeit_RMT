@@ -36,7 +36,8 @@ function tdmsTables = processTDMSFilesAutomated( ...
 
         % extract metadata
         [label, torque, speed, damageLabel, damageType] = extractVariables(fname);
-
+        
+        [~, label] = fileparts(folderPath)
         % read TDMS
         raw       = tdmsread(fullpath)
         dataTable = raw{1};
@@ -46,7 +47,12 @@ function tdmsTables = processTDMSFilesAutomated( ...
             fs = 100000/decimateFactor;
             sampledData = dataTable(1:decimateFactor:end, :);
             sampledData{:,2} = decimate(dataTable{:,2}, decimateFactor);
+            shift_amount = round(0.22 * numel(sampledData{:,2}));
             switch normalization_method
+                case 'augment_translation'
+                    sampledData{:,2} = augment_translation(sampledData{:,2}, shift_amount);
+                case 'normal'
+                    sampledData{:,2} = sampledData{:,2};
                 case 'robust_scaling'
                 sampledData{:,2} = robust_scaling(sampledData{:,2});
                 case 'min_max'
@@ -55,17 +61,17 @@ function tdmsTables = processTDMSFilesAutomated( ...
                 sampledData{:,2} = zscore_normalization(sampledData{:,2});
                 case 'highpass'
                     sampledData{:,2} = min_max_normalization(sampledData{:,2});
-                    sampledData{:,2} = highpassGearMesh(sampledData{:,2}, 100000/decimateFactor, speed, 22, 4);
+                    sampledData{:,2} = highpassGearMesh(sampledData{:,2}, fs, speed, 22, 4);
                 case 'lowpass'
                     sampledData{:,2} = min_max_normalization(sampledData{:,2});
-                    sampledData{:,2} = lowpassGearMesh(sampledData{:,2}, 100000/decimateFactor, speed, 22, 4);
+                    sampledData{:,2} = lowpassGearMesh(sampledData{:,2}, fs, speed, 22, 4);
                 case 'bandpass'
                     sampledData{:,2} = min_max_normalization(sampledData{:,2});
-                    sampledData{:,2} = bandpassGearMesh(sampledData{:,2}, 100000/decimateFactor, speed, 22, 50);
+                    sampledData{:,2} = bandpassGearMesh(sampledData{:,2}, fs, speed, 22, 50);
             end
             if ~isempty(imageFolder)
-                plotFFTAndSave( sampledData{:,2}, fs, speed, 22, ...
-                   'HBK_transformed', label, speed, torque, imageFolder);
+                %plotFFTAndSave( sampledData{:,2}, fs, speed, 22, ...
+                %   'HBK_transformed', label, speed, torque, imageFolder);
             end
         else
             sampledData = dataTable;

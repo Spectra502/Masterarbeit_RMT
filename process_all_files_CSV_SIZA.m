@@ -1,16 +1,20 @@
 function process_all_files_CSV_SIZA()
     % Define folder where your CSV files are
-    %sourceFolder = 'H:\Masterarbeit\Programming\Data\6_SIZA\Messungen_SIZA_Grauflecken_schwer_Severe_Micropitting';
-    sourceFolder = 'H:\Masterarbeit\Programming\Data\SIZA\CSV\healthy\500_Nm';
+    sourceFolder = 'H:\Masterarbeit\Programming\Data\SIZA\CSV\healthy';
 
     addpath('H:\Masterarbeit\Experiment_Database\normalization');
     % Parameters that stay constant
-    %targetFilePath = 'H:\Masterarbeit\Programming\Extracted_Features\SIZA_Grauflecken_schwer_Severe_Micropitting';
-    targetFilePath = 'H:\Masterarbeit\Programming\Extracted_Features\SIZA_14kHz_healthy';
+    targetFilePath = 'H:\Masterarbeit\Programming\Extracted_Features\SIZA_all_damages_highpass';
+    if ~exist(targetFilePath, 'dir')
+        mkdir(targetFilePath);
+    end
     segment_length = 1000;
     overlap = 500;
     featureDomains = {'time', 'frequency', 'time-frequency'};
-    label = 'healthy';
+    [~, label] = fileparts(sourceFolder)
+    timeFolder = fullfile(targetFilePath, 'time');
+    frequencyFolder = fullfile(targetFilePath, 'frequency')
+    timeFrequencyFolder = fullfile(targetFilePath, 'time-frequency')
 
     % Get list of CSV files in the folder
     csvFiles = dir(fullfile(sourceFolder, '*.csv'));
@@ -42,7 +46,12 @@ function process_all_files_CSV_SIZA()
         % torque = input('Enter torque: ');
         % fs = input('Enter sampling frequency (fs): ');
 
-        table_fs_calculated = readtable('H:\Masterarbeit\Programming\Data\SIZA\CSV\healthy\healthy_csv_fs_calculated\healthy_csv_calculated_frequencies.csv')
+        %table_fs_calculated = readtable('H:\Masterarbeit\Programming\Data\SIZA\CSV\healthy\healthy_csv_fs_calculated\healthy_csv_calculated_frequencies.csv')
+        calculated_frequencies_path = fullfile(sourceFolder, ...
+        sprintf('%s_csv_fs_calculated', label), ...
+        sprintf('%s_csv_calculated_frequencies.csv', label))
+
+        table_fs_calculated = readtable(calculated_frequencies_path)
 
         idx = find(strcmp(table_fs_calculated{:,1}, fileName))
 
@@ -59,8 +68,8 @@ function process_all_files_CSV_SIZA()
             disp('No match found.');
         end
 
-        normalized_ch = min_max_normalization(channel_1);
-        %normalized_ch = highpassGearMesh(normalized_ch_min_max, fs, speed, 22, 4);
+        normalized_ch_min_max = min_max_normalization(channel_1);
+        normalized_ch = highpassGearMesh(normalized_ch_min_max, fs, speed, 22, 4);
 
         % Call your processing function
         process_vectorSignal(normalized_ch, targetFilePath, segment_length, overlap, fs, featureDomains, label, speed, torque);
